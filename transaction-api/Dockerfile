@@ -1,22 +1,20 @@
-# Use Temurin JDK 17 instead of openjdk slim
+# ---- Build Stage ----
 FROM eclipse-temurin:17-jdk-jammy as build
 
-# Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom
-COPY mvnw .
-COPY .mvn .mvn
+# Install Maven
+RUN apt-get update && apt-get install -y maven
+
+# Copy pom.xml and download dependencies
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-# Pre-fetch dependencies
-RUN ./mvnw dependency:go-offline -B
+# Copy source code and build
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy source and build
-COPY src src
-RUN ./mvnw package -DskipTests
-
-# Runtime stage
+# ---- Runtime Stage ----
 FROM eclipse-temurin:17-jre-jammy
 
 WORKDIR /app
