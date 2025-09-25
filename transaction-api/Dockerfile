@@ -1,13 +1,27 @@
-# Use the official Maven image to build the project
-# --- Stage 1: Build the JAR file ---
-FROM maven:3.9.2-eclipse-temurin-17 as build
-WORKDIR /app
-COPY . .
-RUN mvn clean package -DskipTests
+# Use Temurin JDK 17 instead of openjdk slim
+FROM eclipse-temurin:17-jdk-jammy as build
 
-# --- Stage 2: Run the JAR ---
-FROM openjdk:17-jdk-slim
+# Set working directory
 WORKDIR /app
-COPY --from=build /app/target/transaction-api-*.jar app.jar
+
+# Copy Maven wrapper and pom
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+
+# Pre-fetch dependencies
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source and build
+COPY src src
+RUN ./mvnw package -DskipTests
+
+# Runtime stage
+FROM eclipse-temurin:17-jre-jammy
+
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
