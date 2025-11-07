@@ -51,7 +51,7 @@ public class TransactionController {
                 m.enrichment_status AS "enrichmentStatus",
                 m.created_at AS "merchantCreatedAt"
             FROM bian.cc_transaction t
-            LEFT JOIN bian.merchant m ON t.merchant_id = m.id
+            LEFT JOIN bian.merchants m ON t.merchant_id = m.id
         """);
 
         if (category != null && !category.isBlank()) {
